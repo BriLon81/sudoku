@@ -4,36 +4,98 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>OneSudoku — 100 Levels</title>
 <style>
-:root{--bg:#0b1220;--panel:#0f172a;--text:#e5e7eb;--muted:#9ca3af;--accent:#60a5fa;--accWeak:rgba(96,165,250,.15);--good:#22c55e}
-*{box-sizing:border-box}html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
-.topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;background:var(--panel);border-bottom:1px solid rgba(255,255,255,.06)}
-.brand{font-weight:700}.spacer{flex:1}.link,.ghost,.btn{cursor:pointer;border:0;border-radius:10px}
-.link{background:transparent;color:var(--text);padding:.5rem .75rem;opacity:.9}.link:hover{opacity:1}
-main{max-width:980px;margin:0 auto;padding:1rem}.view{display:none}.view.active{display:block}
-.tabs{display:flex;gap:.5rem;margin:1rem 0}.tab{cursor:pointer;background:#111827;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:.5rem 1rem;border-radius:999px}
-.tab.active{background:var(--accent);color:#04121e;border-color:transparent}
-.levels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.75rem}
-.tile{background:#0d1527;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:.75rem;text-align:center}
-.tile .id{font-weight:700}.tile .diff{color:var(--muted);font-size:.8rem}.tile .done{color:var(--good);font-size:.85rem;margin-top:.25rem}
-.game-header{display:flex;align-items:center;gap:1rem;margin:.5rem 0}.game-meta{display:flex;gap:1rem;align-items:center}
-.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace}
-.board-wrap{display:flex;justify-content:center;margin:.25rem 0 1rem 0}
-.board{width:min(92vw,520px);aspect-ratio:1/1;display:grid;grid-template-columns:repeat(9,1fr);grid-template-rows:repeat(9,1fr);
-  background:#0b1324;border-radius:8px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
-.cell{display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.06);font-size:1.4rem;user-select:none}
-.cell.given{color:#a6b1c5;font-weight:700}.cell.sel{background:var(--accWeak)}.cell.match{background:rgba(34,197,94,.12)}
-.board::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:8px;
-  background:linear-gradient(#ffffff22,#ffffff22) calc(100%/3) 0/2px 100% no-repeat,
-             linear-gradient(#ffffff22,#ffffff22) calc(200%/3) 0/2px 100% no-repeat,
-             linear-gradient(90deg,#ffffff22,#ffffff22) 0 calc(100%/3)/100% 2px no-repeat,
-             linear-gradient(90deg,#ffffff22,#ffffff22) 0 calc(200%/3)/100% 2px no-repeat}
-.pad{display:flex;flex-direction:column;gap:.5rem;align-items:center}
-.pad .row{display:grid;grid-template-columns:repeat(9,1fr);gap:.5rem;width:min(92vw,520px)}
-.btn{padding:.8rem 0;background:#0e162a;color:var(--text);border:1px solid rgba(255,255,255,.08)}.btn:active{transform:translateY(1px)}
-.ghost{background:#101828;border:1px solid rgba(255,255,255,.1);color:var(--text);padding:.6rem 1rem}
-dialog{border:none;border-radius:16px;background:#0f1629;color:var(--text);padding:0;max-width:360px;width:90vw}
-.dialog-body{padding:1rem}.checkmark{font-size:48px;color:var(--good);text-align:center}.dialog-actions{display:flex;justify-content:center;margin-top:.5rem}
-footer{padding:1rem;color:#9ca3af;text-align:center}
+:root{
+  --bg:#0a0f1b;
+  --bg-grad:
+    radial-gradient(1200px 600px at 20% -10%, #1b2a4b 0%, transparent 60%),
+    radial-gradient(1000px 500px at 120% 10%, #19314d 0%, transparent 55%),
+    linear-gradient(#0a0f1b,#0a0f1b);
+  --panel:#0f172a;
+  --card:#111a32;
+  --text:#e8eefc;
+  --muted:#9fb0d0;
+  --accent:#77b0ff;
+  --accent-ink:#031225;
+  --accent-weak:rgba(119,176,255,.15);
+  --good:#30d17a;
+  --stroke:rgba(255,255,255,.10);
+  --hair:rgba(255,255,255,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg-grad);color:var(--text);
+  font-family:ui-sans-serif,system-ui,-apple-system,"SF Pro Text","Segoe UI",Roboto,Inter,Arial,sans-serif}
+.topbar{
+  position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:.6rem;
+  padding:.8rem 1.2rem;background:rgba(10,15,27,.6);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--hair)
+}
+.brand{font-weight:800;letter-spacing:.2px}
+.spacer{flex:1}
+.link,.ghost,.btn,.tab{cursor:pointer;border:0;border-radius:12px;transition:.15s}
+.link{background:transparent;color:var(--text);padding:.5rem .8rem;opacity:.9}
+.link:hover{opacity:1;transform:translateY(-1px)}
+main{max-width:1100px;margin:0 auto;padding:1.2rem}
+h1{margin:1rem 0 1.25rem 0;font-size:clamp(28px,4vw,40px);letter-spacing:.2px}
+.view{display:none}.view.active{display:block}
+
+/* difficulty tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.2rem}
+.tab{background:transparent;color:var(--text);border:1px solid var(--stroke);padding:.5rem 1rem;border-radius:999px}
+.tab.active{background:var(--accent);color:var(--accent-ink);border-color:transparent;box-shadow:0 4px 20px rgba(119,176,255,.25)}
+
+/* level tiles */
+.levels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem}
+.tile{
+  text-align:left;padding:1rem;border-radius:16px;border:1px solid var(--stroke);
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+  box-shadow:0 10px 30px rgba(0,0,0,.25);transition:.18s transform,.18s box-shadow,.18s border-color
+}
+.tile:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(0,0,0,.35);border-color:rgba(255,255,255,.2)}
+.tile .id{font-weight:800;font-size:1rem}
+.tile .diff{color:var(--muted);font-size:.8rem;margin-top:.15rem}
+.tile .done{color:var(--good);font-weight:700;font-size:.9rem;margin-top:.35rem}
+
+/* game header */
+.game-header{display:flex;align-items:center;gap:1rem;margin:.75rem 0}
+.game-meta{display:flex;gap:1rem;align-items:center;font-size:.95rem;
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+  border:1px solid var(--stroke);border-radius:12px;padding:.5rem .8rem}
+
+/* board */
+.board-wrap{display:flex;justify-content:center;margin:.6rem 0 1.2rem 0}
+.board{
+  width:min(92vw,560px);aspect-ratio:1/1;display:grid;
+  grid-template-columns:repeat(9,1fr);grid-template-rows:repeat(9,1fr);
+  background:rgba(6,10,20,.9);border-radius:12px;overflow:hidden;border:1px solid var(--stroke);position:relative
+}
+.cell{display:flex;align-items:center;justify-content:center;border:1px solid var(--hair);
+  font-size:1.45rem;user-select:none}
+.cell.given{color:#b8c7eb;font-weight:800}
+.cell.sel{background:var(--accent-weak);outline:2px solid rgba(119,176,255,.25);outline-offset:-2px}
+.cell.match{background:rgba(48,209,122,.1)}
+.board::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:12px;
+  background:
+    linear-gradient(#ffffff33,#ffffff33) calc(100%/3) 0/2px 100% no-repeat,
+    linear-gradient(#ffffff33,#ffffff33) calc(200%/3) 0/2px 100% no-repeat,
+    linear-gradient(90deg,#ffffff33,#ffffff33) 0 calc(100%/3)/100% 2px no-repeat,
+    linear-gradient(90deg,#ffffff33,#ffffff33) 0 calc(200%/3)/100% 2px no-repeat}
+
+/* number pad */
+.pad{display:flex;flex-direction:column;gap:.7rem;align-items:center}
+.pad .row{display:grid;grid-template-columns:repeat(9,1fr);gap:.6rem;width:min(92vw,560px)}
+.btn{padding:.9rem 0;background:rgba(255,255,255,.06);color:var(--text);
+  border:1px solid var(--stroke);border-radius:12px;font-weight:700}
+.btn:active{transform:translateY(1px)}
+.ghost{background:transparent;border:1px solid var(--stroke);color:var(--text);padding:.7rem 1rem;border-radius:12px}
+
+.footer{padding:1.2rem;color:var(--muted);text-align:center}
+
+/* dialog */
+dialog{border:none;border-radius:18px;background:rgba(16,24,48,.98);color:var(--text);padding:0;
+  max-width:380px;width:92vw;border:1px solid var(--stroke);box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.dialog-body{padding:1.2rem}
+.checkmark{font-size:52px;color:var(--good);text-align:center}
+.dialog-actions{display:flex;justify-content:center;margin-top:.6rem}
 </style>
 
 <body>
@@ -309,3 +371,4 @@ renderLevels('Easy');
 </script>
 </body>
 </html>
+
