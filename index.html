@@ -5,30 +5,19 @@
 <title>Brian's Sudoku Challenge!</title>
 <style>
 :root{
-  /* Light theme with clear contrast */
-  --bg:#f7f9fc;
-  --panel:#ffffff;
-  --text:#0f172a;
-  --muted:#475569;
-  --accent:#2563eb;         /* vibrant blue */
-  --accent-ink:#ffffff;     /* white on blue */
-  --accent-weak:#e8f0ff;    /* selection wash */
-  --good:#16a34a;
-  --stroke:#e2e8f0;
-  --hair:#edf2f7;
-  --tile:#ffffff;
+  --bg:#f7f9fc; --panel:#ffffff; --text:#0f172a; --muted:#475569;
+  --accent:#2563eb; --accent-ink:#ffffff; --accent-weak:#e8f0ff;
+  --good:#16a34a; --stroke:#e2e8f0; --hair:#edf2f7; --tile:#ffffff;
   --tile-shadow:0 8px 24px rgba(2,8,23,.06);
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
   font-family:ui-sans-serif,system-ui,-apple-system,"SF Pro Text","Segoe UI",Roboto,Inter,Arial,sans-serif}
-.topbar{
-  position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:.75rem;
-  padding:1rem 1.25rem;background:var(--panel);border-bottom:1px solid var(--stroke)
-}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:.75rem;
+  padding:1rem 1.25rem;background:var(--panel);border-bottom:1px solid var(--stroke)}
 .brand{font-weight:800;letter-spacing:.2px}
 .spacer{flex:1}
-.link,.ghost,.btn,.tab{cursor:pointer;border:0;border-radius:12px;transition:.15s;font-weight:600}
+.link,.ghost,.btn,.tab,.toggle{cursor:pointer;border:0;border-radius:12px;transition:.15s;font-weight:600}
 .link{background:transparent;color:var(--text);padding:.5rem .8rem}
 .link:hover{background:var(--hair)}
 main{max-width:1100px;margin:0 auto;padding:1.25rem}
@@ -43,10 +32,8 @@ h1{margin:1rem 0 1.25rem 0;font-size:clamp(28px,4vw,40px);letter-spacing:.2px}
 
 /* level tiles */
 .levels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:1rem}
-.tile{
-  text-align:left;padding:1rem;border-radius:14px;border:1px solid var(--stroke);
-  background:var(--tile);box-shadow:var(--tile-shadow);transition:.18s transform,.18s box-shadow,.18s border-color
-}
+.tile{ text-align:left;padding:1rem;border-radius:14px;border:1px solid var(--stroke);
+  background:var(--tile);box-shadow:var(--tile-shadow);transition:.18s transform,.18s box-shadow,.18s border-color }
 .tile:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(2,8,23,.08);border-color:#cbd5e1}
 .tile .id{font-weight:800;font-size:1rem}
 .tile .diff{color:var(--muted);font-size:.85rem;margin-top:.15rem}
@@ -59,14 +46,14 @@ h1{margin:1rem 0 1.25rem 0;font-size:clamp(28px,4vw,40px);letter-spacing:.2px}
 .mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace}
 
 /* board */
-.board-wrap{display:flex;justify-content:center;margin:.6rem 0 1.2rem 0}
+.board-wrap{display:flex;justify-content:center;margin:.6rem 0 1rem 0}
 .board{
   width:min(92vw,560px);aspect-ratio:1/1;display:grid;
   grid-template-columns:repeat(9,1fr);grid-template-rows:repeat(9,1fr);
   background:var(--panel);border-radius:12px;overflow:hidden;border:1px solid var(--stroke);position:relative
 }
 .cell{display:flex;align-items:center;justify-content:center;border:1px solid var(--stroke);
-  font-size:1.45rem;user-select:none}
+  font-size:1.45rem;user-select:none;position:relative}
 .cell.given{color:#64748b;font-weight:800}
 .cell.sel{background:var(--accent-weak);outline:2px solid rgba(37,99,235,.25);outline-offset:-2px}
 .cell.match{background:#ecfdf5}
@@ -77,18 +64,33 @@ h1{margin:1rem 0 1.25rem 0;font-size:clamp(28px,4vw,40px);letter-spacing:.2px}
     linear-gradient(90deg,#0f172a1a,#0f172a1a) 0 calc(100%/3)/100% 2px no-repeat,
     linear-gradient(90deg,#0f172a1a,#0f172a1a) 0 calc(200%/3)/100% 2px no-repeat}
 
-/* number pad */
+/* candidates (pencil marks) */
+.cands{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+  font-size:.7rem;color:#475569;line-height:1;pointer-events:none;padding:.25rem}
+.cands span{display:flex;align-items:center;justify-content:center;opacity:.9}
+
+/* number pad + note controls */
 .pad{display:flex;flex-direction:column;gap:.8rem;align-items:center}
 .pad .row{display:grid;grid-template-columns:repeat(9,1fr);gap:.6rem;width:min(92vw,560px)}
 .btn{padding:1rem 0;background:var(--accent);color:var(--accent-ink);
   border:1px solid var(--accent);border-radius:12px}
 .btn:hover{filter:brightness(.98)}
 .btn:active{transform:translateY(1px)}
+.controls{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-top:.2rem}
 .ghost{background:#f1f5f9;border:1px solid #cbd5e1;color:#0f172a;padding:.8rem 1rem;border-radius:12px}
 .ghost:hover{background:#e2e8f0}
+.toggle{background:#f1f5f9;border:1px solid #cbd5e1;color:#0f172a;padding:.8rem 1rem}
+.toggle.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 
-/* footer & dialog */
+/* notes panel */
+.notes{max-width:min(92vw,560px);margin:1rem auto 0;background:var(--panel);border:1px solid var(--stroke);
+  border-radius:12px;box-shadow:var(--tile-shadow)}
+.notes h3{margin:.8rem 1rem .25rem 1rem;font-size:1rem;color:var(--muted)}
+.notes textarea{width:100%;border:0;outline:0;resize:vertical;min-height:96px;padding:.8rem 1rem 1rem 1rem;
+  background:transparent;color:var(--text);font-size:1rem;border-top:1px solid var(--hair)}
 .footer{padding:1.2rem;color:var(--muted);text-align:center}
+
+/* dialog */
 dialog{border:none;border-radius:16px;background:var(--panel);color:var(--text);padding:0;
   max-width:380px;width:92vw;border:1px solid var(--stroke);box-shadow:0 24px 60px rgba(2,8,23,.18)}
 .dialog-body{padding:1.2rem}
@@ -134,12 +136,19 @@ dialog{border:none;border-radius:16px;background:var(--panel);color:var(--text);
           <button class="btn" data-num="4">4</button><button class="btn" data-num="5">5</button><button class="btn" data-num="6">6</button>
           <button class="btn" data-num="7">7</button><button class="btn" data-num="8">8</button><button class="btn" data-num="9">9</button>
         </div>
-        <div class="row">
+        <div class="controls">
           <button id="btnErase" class="ghost">Erase</button>
           <button id="btnHint"  class="ghost">Hint</button>
           <button id="btnUndo"  class="ghost">Undo</button>
+          <button id="btnNotes" class="toggle" aria-pressed="false">Notes</button>
+          <button id="btnClearNotes" class="ghost">Clear notes</button>
         </div>
       </div>
+
+      <section class="notes" aria-label="Puzzle notes">
+        <h3>Puzzle notes</h3>
+        <textarea id="freeNotes" placeholder="Write strategies, observations, or reminders here…"></textarea>
+      </section>
     </section>
   </main>
 
@@ -152,11 +161,11 @@ dialog{border:none;border-radius:16px;background:var(--panel);color:var(--text);
     </div>
   </dialog>
 
-  <footer class="footer">Saves progress in your browser</footer>
+  <footer class="footer">Saves progress and notes per puzzle</footer>
 
 <script>
-/* --- Build 100 puzzles via uniqueness-preserving transforms --- */
-const BASE=[
+/* --- Generate 100 puzzles with uniqueness-preserving transforms --- */
+const BASE=[ /* Easy, Medium, Hard, Expert (p, s) */ 
  {p:"530070000600195000098000060800060003400803001700020006060000280000419005000080079",
   s:"534678912672195348198342567859761423426853791713924856961537284287419635345286179"},
  {p:"005300000800000020070000405000080700040302010009050000901000080020000009000006300",
@@ -199,11 +208,11 @@ function buildDataset(){
 }
 const PUZZLES = buildDataset();
 
-/* ---- UI + logic ---- */
+/* ---------- State ---------- */
 const levelsView=document.getElementById('levelsView');
 const gameView=document.getElementById('gameView');
 const levelsGrid=document.getElementById('levelsGrid');
-const tabs=Array.from(document.querySelectorAll('.tab'));
+const tabs=[...document.querySelectorAll('.tab')];
 const puzzleLabel=document.getElementById('puzzleLabel');
 const timerEl=document.getElementById('timer');
 const mistakesEl=document.getElementById('mistakes');
@@ -217,13 +226,20 @@ const backToLevels=document.getElementById('backToLevels');
 const winDialog=document.getElementById('winDialog');
 const winTime=document.getElementById('winTime');
 const winClose=document.getElementById('winClose');
+const freeNotes=document.getElementById('freeNotes');
+const btnNotes=document.getElementById('btnNotes');
+const btnClearNotes=document.getElementById('btnClearNotes');
 
 let current=null, grid=[], givens=new Set(), selected=null, mistakes=0, seconds=0, timer=null, undoStack=[];
+let notesMode=false;
+let cands = Array.from({length:81}, ()=> new Set()); // candidates per cell
 
+/* ---------- Helpers ---------- */
 function show(id){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-function loadProgress(id){ const raw=localStorage.getItem('sudoku_progress_v1'); const all=raw?JSON.parse(raw):{}; return all[id]||null; }
-function saveProgress(id,obj){ const raw=localStorage.getItem('sudoku_progress_v1'); const all=raw?JSON.parse(raw):{}; all[id]=obj; localStorage.setItem('sudoku_progress_v1', JSON.stringify(all)); }
+function loadProgress(id){ const raw=localStorage.getItem('sudoku_progress_v2'); const all=raw?JSON.parse(raw):{}; return all[id]||null; }
+function saveProgress(id,obj){ const raw=localStorage.getItem('sudoku_progress_v2'); const all=raw?JSON.parse(raw):{}; all[id]=obj; localStorage.setItem('sudoku_progress_v2', JSON.stringify(all)); }
 function timeString(s){ const h=(s/3600)|0, m=((s%3600)/60)|0, ss=s%60; return h>0?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
+const notesKey = id => `sudoku_free_notes_${id}`;
 
 function renderLevels(diff="Easy"){
   tabs.forEach(t=>t.classList.toggle('active', t.dataset.diff===diff));
@@ -232,7 +248,7 @@ function renderLevels(diff="Easy"){
   for(const p of list){
     const prog = loadProgress(p.id);
     const card = document.createElement('button');
-    card.className = 'tile';
+    card.className='tile';
     card.innerHTML = `<div class="id">Puzzle #${p.id}</div>
       <div class="diff">${p.difficulty}</div>
       ${prog?.completed?'<div class="done">✓ Completed</div>':''}`;
@@ -246,13 +262,16 @@ function stopTimer(){ clearInterval(timer); timer=null; }
 
 function startGame(p){
   current=p; puzzleLabel.textContent=`Puzzle #${p.id} — ${p.difficulty}`;
-  mistakes=0; undoStack=[];
-  const saved = loadProgress(p.id);
-  grid = (saved?.current || p.puzzle).split('').map(ch=>+ch);
-  seconds = saved?.seconds || 0;
-  givens = new Set(); for(let i=0;i<81;i++) if(p.puzzle[i]!=='0') givens.add(i);
-  mistakes = saved?.mistakes || 0; mistakesEl.textContent = `Mistakes: ${mistakes}`;
+  mistakes=0; undoStack=[]; notesMode=false; btnNotes.classList.remove('active'); btnNotes.setAttribute('aria-pressed','false');
+  const saved=loadProgress(p.id);
+  grid=(saved?.current || p.puzzle).split('').map(ch=>+ch);
+  seconds=saved?.seconds || 0;
+  cands = Array.from({length:81}, ()=> new Set());
+  if (saved?.cands){ saved.cands.forEach((s,i)=>{ if(s) s.split('').forEach(n=>cands[i].add(+n)); }); }
+  givens=new Set(); for(let i=0;i<81;i++) if(p.puzzle[i]!=='0') givens.add(i);
+  mistakes=saved?.mistakes || 0; mistakesEl.textContent=`Mistakes: ${mistakes}`;
   selected=null; renderBoard(); timerEl.textContent=timeString(seconds);
+  freeNotes.value = localStorage.getItem(notesKey(p.id)) || "";
   saved?.completed?stopTimer():startTimer();
   show('gameView');
 }
@@ -265,14 +284,21 @@ function renderBoard(){
     div.className='cell'; if(givens.has(i)) div.classList.add('given');
     if(selected===i) div.classList.add('sel');
     if(selected!=null && grid[selected]!==0 && grid[i]===grid[selected] && i!==selected) div.classList.add('match');
-    div.textContent = v===0 ? "" : String(v);
+    if (v===0 && cands[i].size>0){
+      const wrap=document.createElement('div'); wrap.className='cands';
+      for(let n=1;n<=9;n++){ const s=document.createElement('span'); s.textContent=cands[i].has(n)?n:""; wrap.appendChild(s); }
+      div.appendChild(wrap);
+    } else {
+      div.textContent = v===0 ? "" : String(v);
+    }
     div.addEventListener('click',()=>{selected=i; renderBoard();});
     boardEl.appendChild(div);
   }
 }
 
-function pushUndo(){ undoStack.push([...grid]); if(undoStack.length>200) undoStack.shift(); }
-function undo(){ if(undoStack.length){ grid=undoStack.pop(); persist(); renderBoard(); } }
+function pushUndo(){ undoStack.push({grid:[...grid], cands: cands.map(s=> new Set(s))}); if(undoStack.length>200) undoStack.shift(); }
+function undo(){ if(!undoStack.length) return; const prev=undoStack.pop(); grid=[...prev.grid]; cands=prev.cands.map(s=> new Set(s)); persist(); renderBoard(); }
+
 function isValid(idx,val){
   if(val===0) return true;
   const r=(idx/9)|0, c=idx%9;
@@ -281,37 +307,70 @@ function isValid(idx,val){
   for(let rr=br; rr<br+3; rr++) for(let cc=bc; cc<bc+3; cc++){ const i=rr*9+cc; if(i!==idx && grid[i]===val) return false; }
   return true;
 }
+
 function input(n){
   if(selected==null || givens.has(selected)) return;
-  pushUndo(); grid[selected]=n;
-  if(!isValid(selected,n)){ mistakes++; mistakesEl.textContent=`Mistakes: ${mistakes}`; }
+  pushUndo();
+  if (notesMode){
+    if (grid[selected]!==0) { undoStack.pop(); return; } // don't add notes over solved cell
+    if (cands[selected].has(n)) cands[selected].delete(n); else cands[selected].add(n);
+  } else {
+    grid[selected]=n; cands[selected].clear();
+    if(!isValid(selected,n)){ mistakes++; mistakesEl.textContent=`Mistakes: ${mistakes}`; }
+  }
   persist(); renderBoard(); checkWin();
 }
-function erase(){ if(selected==null || givens.has(selected)) return; pushUndo(); grid[selected]=0; persist(); renderBoard(); }
-function hint(){ if(selected==null || givens.has(selected)) return; pushUndo(); grid[selected]=+current.solution[selected]; persist(); renderBoard(); checkWin(); }
-function persist(completed=false){ saveProgress(current.id, {current:grid.map(String).join(''), seconds, mistakes, completed}); }
-function checkWin(){
-  for(let i=0;i<81;i++) if(grid[i]!==+current.solution[i]) return;
-  stopTimer(); persist(true); winTime.textContent=`Time: ${timeString(seconds)}`; winDialog.showModal();
+function erase(){
+  if(selected==null || givens.has(selected)) return;
+  pushUndo(); if (notesMode) { cands[selected].clear(); } else { grid[selected]=0; }
+  persist(); renderBoard();
 }
-function resetCurrent(){ if(!current) return; grid=current.puzzle.split('').map(ch=>+ch); mistakes=0; seconds=0; undoStack=[]; persist(false); renderBoard(); timerEl.textContent=timeString(seconds); startTimer(); }
+function hint(){ if(selected==null || givens.has(selected)) return; pushUndo(); grid[selected]=+current.solution[selected]; cands[selected].clear(); persist(); renderBoard(); checkWin(); }
 
-/* events */
+function persist(completed=false){
+  const candStrings = cands.map(s=> s.size? [...s].sort().join("") : "");
+  saveProgress(current.id, {current:grid.map(String).join(''), seconds, mistakes, completed, cands:candStrings});
+}
+function checkWin(){ for(let i=0;i<81;i++) if(grid[i]!==+current.solution[i]) return; stopTimer(); persist(true); winTime.textContent=`Time: ${timeString(seconds)}`; winDialog.showModal(); }
+function resetCurrent(){ if(!current) return; grid=current.puzzle.split('').map(ch=>+ch); mistakes=0; seconds=0; undoStack=[]; cands=Array.from({length:81},()=>new Set()); persist(false); renderBoard(); timerEl.textContent=timeString(seconds); startTimer(); }
+
+/* ---------- Events ---------- */
 document.querySelectorAll('.btn[data-num]').forEach(b=>b.addEventListener('click',()=>input(+b.dataset.num)));
 btnErase.addEventListener('click', erase);
 btnHint.addEventListener('click', hint);
 btnUndo.addEventListener('click', undo);
 btnLevels.addEventListener('click', ()=>{show('levelsView'); stopTimer();});
-backToLevels.addEventListener('click', ()=>{show('levelsView'); stopTimer();});
+backToLevels?.addEventListener('click', ()=>{show('levelsView'); stopTimer();});
 btnReset.addEventListener('click', resetCurrent);
 winClose.addEventListener('click', ()=>{winDialog.close(); show('levelsView');});
-tabs.forEach(t=>t.addEventListener('click', ()=> renderLevels(t.dataset.diff))); /* difficulty toggle fixed */
+
+/* notes mode + note area */
+btnNotes.addEventListener('click', ()=>{
+  notesMode = !notesMode;
+  btnNotes.classList.toggle('active', notesMode);
+  btnNotes.setAttribute('aria-pressed', String(notesMode));
+});
+btnClearNotes.addEventListener('click', ()=>{
+  if(selected==null || givens.has(selected)) return;
+  cands[selected].clear(); persist(); renderBoard();
+});
+let notesTimer=null;
+freeNotes.addEventListener('input', ()=>{
+  if(!current) return;
+  clearTimeout(notesTimer);
+  notesTimer=setTimeout(()=> localStorage.setItem(notesKey(current.id), freeNotes.value), 250);
+});
+
+/* difficulty toggle */
+tabs.forEach(t=>t.addEventListener('click', ()=> renderLevels(t.dataset.diff)));
 
 /* init */
 renderLevels('Easy');
 </script>
 </body>
 </html>
+
+
 
 
 
