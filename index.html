@@ -2,97 +2,95 @@
 <html lang="en">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>OneSudoku — 100 Levels</title>
+<title>Brian's Sudoku Challenge!</title>
 <style>
 :root{
-  --bg:#0a0f1b;
-  --bg-grad:
-    radial-gradient(1200px 600px at 20% -10%, #1b2a4b 0%, transparent 60%),
-    radial-gradient(1000px 500px at 120% 10%, #19314d 0%, transparent 55%),
-    linear-gradient(#0a0f1b,#0a0f1b);
-  --panel:#0f172a;
-  --card:#111a32;
-  --text:#e8eefc;
-  --muted:#9fb0d0;
-  --accent:#77b0ff;
-  --accent-ink:#031225;
-  --accent-weak:rgba(119,176,255,.15);
-  --good:#30d17a;
-  --stroke:rgba(255,255,255,.10);
-  --hair:rgba(255,255,255,.06);
+  /* Light theme with clear contrast */
+  --bg:#f7f9fc;
+  --panel:#ffffff;
+  --text:#0f172a;
+  --muted:#475569;
+  --accent:#2563eb;         /* vibrant blue */
+  --accent-ink:#ffffff;     /* white on blue */
+  --accent-weak:#e8f0ff;    /* selection wash */
+  --good:#16a34a;
+  --stroke:#e2e8f0;
+  --hair:#edf2f7;
+  --tile:#ffffff;
+  --tile-shadow:0 8px 24px rgba(2,8,23,.06);
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg-grad);color:var(--text);
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
   font-family:ui-sans-serif,system-ui,-apple-system,"SF Pro Text","Segoe UI",Roboto,Inter,Arial,sans-serif}
 .topbar{
-  position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:.6rem;
-  padding:.8rem 1.2rem;background:rgba(10,15,27,.6);backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--hair)
+  position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:.75rem;
+  padding:1rem 1.25rem;background:var(--panel);border-bottom:1px solid var(--stroke)
 }
 .brand{font-weight:800;letter-spacing:.2px}
 .spacer{flex:1}
-.link,.ghost,.btn,.tab{cursor:pointer;border:0;border-radius:12px;transition:.15s}
-.link{background:transparent;color:var(--text);padding:.5rem .8rem;opacity:.9}
-.link:hover{opacity:1;transform:translateY(-1px)}
-main{max-width:1100px;margin:0 auto;padding:1.2rem}
+.link,.ghost,.btn,.tab{cursor:pointer;border:0;border-radius:12px;transition:.15s;font-weight:600}
+.link{background:transparent;color:var(--text);padding:.5rem .8rem}
+.link:hover{background:var(--hair)}
+main{max-width:1100px;margin:0 auto;padding:1.25rem}
 h1{margin:1rem 0 1.25rem 0;font-size:clamp(28px,4vw,40px);letter-spacing:.2px}
 .view{display:none}.view.active{display:block}
 
 /* difficulty tabs */
 .tabs{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.2rem}
-.tab{background:transparent;color:var(--text);border:1px solid var(--stroke);padding:.5rem 1rem;border-radius:999px}
-.tab.active{background:var(--accent);color:var(--accent-ink);border-color:transparent;box-shadow:0 4px 20px rgba(119,176,255,.25)}
+.tab{background:#eef2ff;color:#1e3a8a;border:1px solid #c7d2fe;padding:.5rem 1rem;border-radius:999px}
+.tab:hover{filter:brightness(.98)}
+.tab.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);box-shadow:0 6px 18px rgba(37,99,235,.25)}
 
 /* level tiles */
-.levels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem}
+.levels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:1rem}
 .tile{
-  text-align:left;padding:1rem;border-radius:16px;border:1px solid var(--stroke);
-  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
-  box-shadow:0 10px 30px rgba(0,0,0,.25);transition:.18s transform,.18s box-shadow,.18s border-color
+  text-align:left;padding:1rem;border-radius:14px;border:1px solid var(--stroke);
+  background:var(--tile);box-shadow:var(--tile-shadow);transition:.18s transform,.18s box-shadow,.18s border-color
 }
-.tile:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(0,0,0,.35);border-color:rgba(255,255,255,.2)}
+.tile:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(2,8,23,.08);border-color:#cbd5e1}
 .tile .id{font-weight:800;font-size:1rem}
-.tile .diff{color:var(--muted);font-size:.8rem;margin-top:.15rem}
+.tile .diff{color:var(--muted);font-size:.85rem;margin-top:.15rem}
 .tile .done{color:var(--good);font-weight:700;font-size:.9rem;margin-top:.35rem}
 
 /* game header */
 .game-header{display:flex;align-items:center;gap:1rem;margin:.75rem 0}
 .game-meta{display:flex;gap:1rem;align-items:center;font-size:.95rem;
-  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
-  border:1px solid var(--stroke);border-radius:12px;padding:.5rem .8rem}
+  background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:.5rem .8rem}
+.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace}
 
 /* board */
 .board-wrap{display:flex;justify-content:center;margin:.6rem 0 1.2rem 0}
 .board{
   width:min(92vw,560px);aspect-ratio:1/1;display:grid;
   grid-template-columns:repeat(9,1fr);grid-template-rows:repeat(9,1fr);
-  background:rgba(6,10,20,.9);border-radius:12px;overflow:hidden;border:1px solid var(--stroke);position:relative
+  background:var(--panel);border-radius:12px;overflow:hidden;border:1px solid var(--stroke);position:relative
 }
-.cell{display:flex;align-items:center;justify-content:center;border:1px solid var(--hair);
+.cell{display:flex;align-items:center;justify-content:center;border:1px solid var(--stroke);
   font-size:1.45rem;user-select:none}
-.cell.given{color:#b8c7eb;font-weight:800}
-.cell.sel{background:var(--accent-weak);outline:2px solid rgba(119,176,255,.25);outline-offset:-2px}
-.cell.match{background:rgba(48,209,122,.1)}
+.cell.given{color:#64748b;font-weight:800}
+.cell.sel{background:var(--accent-weak);outline:2px solid rgba(37,99,235,.25);outline-offset:-2px}
+.cell.match{background:#ecfdf5}
 .board::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:12px;
   background:
-    linear-gradient(#ffffff33,#ffffff33) calc(100%/3) 0/2px 100% no-repeat,
-    linear-gradient(#ffffff33,#ffffff33) calc(200%/3) 0/2px 100% no-repeat,
-    linear-gradient(90deg,#ffffff33,#ffffff33) 0 calc(100%/3)/100% 2px no-repeat,
-    linear-gradient(90deg,#ffffff33,#ffffff33) 0 calc(200%/3)/100% 2px no-repeat}
+    linear-gradient(#0f172a1a,#0f172a1a) calc(100%/3) 0/2px 100% no-repeat,
+    linear-gradient(#0f172a1a,#0f172a1a) calc(200%/3) 0/2px 100% no-repeat,
+    linear-gradient(90deg,#0f172a1a,#0f172a1a) 0 calc(100%/3)/100% 2px no-repeat,
+    linear-gradient(90deg,#0f172a1a,#0f172a1a) 0 calc(200%/3)/100% 2px no-repeat}
 
 /* number pad */
-.pad{display:flex;flex-direction:column;gap:.7rem;align-items:center}
+.pad{display:flex;flex-direction:column;gap:.8rem;align-items:center}
 .pad .row{display:grid;grid-template-columns:repeat(9,1fr);gap:.6rem;width:min(92vw,560px)}
-.btn{padding:.9rem 0;background:rgba(255,255,255,.06);color:var(--text);
-  border:1px solid var(--stroke);border-radius:12px;font-weight:700}
+.btn{padding:1rem 0;background:var(--accent);color:var(--accent-ink);
+  border:1px solid var(--accent);border-radius:12px}
+.btn:hover{filter:brightness(.98)}
 .btn:active{transform:translateY(1px)}
-.ghost{background:transparent;border:1px solid var(--stroke);color:var(--text);padding:.7rem 1rem;border-radius:12px}
+.ghost{background:#f1f5f9;border:1px solid #cbd5e1;color:#0f172a;padding:.8rem 1rem;border-radius:12px}
+.ghost:hover{background:#e2e8f0}
 
+/* footer & dialog */
 .footer{padding:1.2rem;color:var(--muted);text-align:center}
-
-/* dialog */
-dialog{border:none;border-radius:18px;background:rgba(16,24,48,.98);color:var(--text);padding:0;
-  max-width:380px;width:92vw;border:1px solid var(--stroke);box-shadow:0 20px 60px rgba(0,0,0,.45)}
+dialog{border:none;border-radius:16px;background:var(--panel);color:var(--text);padding:0;
+  max-width:380px;width:92vw;border:1px solid var(--stroke);box-shadow:0 24px 60px rgba(2,8,23,.18)}
 .dialog-body{padding:1.2rem}
 .checkmark{font-size:52px;color:var(--good);text-align:center}
 .dialog-actions{display:flex;justify-content:center;margin-top:.6rem}
@@ -100,7 +98,7 @@ dialog{border:none;border-radius:18px;background:rgba(16,24,48,.98);color:var(--
 
 <body>
   <header class="topbar">
-    <div class="brand">OneSudoku</div>
+    <div class="brand">Brian's Sudoku Challenge!</div>
     <div class="spacer"></div>
     <button id="btnLevels" class="link">Levels</button>
     <button id="btnReset" class="link" title="Reset current puzzle">Reset</button>
@@ -127,7 +125,9 @@ dialog{border:none;border-radius:18px;background:rgba(16,24,48,.98);color:var(--
           <span id="mistakes">Mistakes: 0</span>
         </div>
       </div>
+
       <div class="board-wrap"><div id="board" class="board"></div></div>
+
       <div class="pad">
         <div class="row">
           <button class="btn" data-num="1">1</button><button class="btn" data-num="2">2</button><button class="btn" data-num="3">3</button>
@@ -152,153 +152,91 @@ dialog{border:none;border-radius:18px;background:rgba(16,24,48,.98);color:var(--
     </div>
   </dialog>
 
-  <footer><span>Saves progress in your browser</span></footer>
+  <footer class="footer">Saves progress in your browser</footer>
 
 <script>
-/* ---- 100 levels generator: start with 4 base puzzles + solution, then make 25 safe variants each ---- */
-const BASE = [
-  { // Easy
-    p:"530070000600195000098000060800060003400803001700020006060000280000419005000080079",
-    s:"534678912672195348198342567859761423426853791713924856961537284287419635345286179"
-  },
-  { // Medium
-    p:"005300000800000020070000405000080700040302010009050000901000080020000009000006300",
-    s:"145379268896145723273868415512684793748392516369751842931427685624583179857916234"
-  },
-  { // Hard
-    p:"000000907000420180000705026100904000050000040000507009920108000034059000507000000",
-    s:"461832957375426189298715326183974265752691843649527819926148537834259671517363492"
-  },
-  { // Expert
-    p:"000900002050000600000008001007000040908000106010000800700500000004000020500007000",
-    s:"471963582852174693396258471167839245948725136213646859729581364634392718585417923"
-  }
+/* --- Build 100 puzzles via uniqueness-preserving transforms --- */
+const BASE=[
+ {p:"530070000600195000098000060800060003400803001700020006060000280000419005000080079",
+  s:"534678912672195348198342567859761423426853791713924856961537284287419635345286179"},
+ {p:"005300000800000020070000405000080700040302010009050000901000080020000009000006300",
+  s:"145379268896145723273868415512684793748392516369751842931427685624583179857916234"},
+ {p:"000000907000420180000705026100904000050000040000507009920108000034059000507000000",
+  s:"461832957375426189298715326183974265752691843649527819926148537834259671517363492"},
+ {p:"000900002050000600000008001007000040908000106010000800700500000004000020500007000",
+  s:"471963582852174693396258471167839245948725136213646859729581364634392718585417923"}
 ];
-function rc(i){return [Math.floor(i/9), i%9];}
-function idx(r,c){return r*9+c;}
-function transform(puz, sol, seed){
-  // PRNG
-  let t = seed>>>0; const rnd=()=> (t=(t*1664525+1013904223)>>>0)/4294967296;
-  // digit permutation
-  let d=[1,2,3,4,5,6,7,8,9]; for(let i=d.length-1;i>0;i--){const j=(rnd()* (i+1))|0; [d[i],d[j]]=[d[j],d[i]];}
-  const map=(g)=>g.split("").map(ch=> ch==="0"?"0":String(d[parseInt(ch,10)-1])).join("");
-  let P=map(puz), S=map(sol);
-
-  // optional transpose
-  if (rnd()<0.5){
-    const trans = g => {
-      const a=g.split("").map(Number); const b=new Array(81).fill(0);
-      for(let r=0;r<9;r++)for(let c=0;c<9;c++) b[idx(c,r)]=a[idx(r,c)];
-      return b.map(String).join("");
-    };
-    P=trans(P); S=trans(S);
-  }
-  // permute bands/stacks and rows/cols within them
-  const perm3 = arr => { const a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=(rnd()*(i+1))|0; [a[i],a[j]]=[a[j],a[i]];} return a; };
-  function permuteRowsWithinBands(g){
-    const a=g.split("").map(Number); const b=new Array(81).fill(0);
-    for(let band=0; band<3; band++){
-      const rows=perm3([0,1,2]);
-      for(let i=0;i<3;i++){
-        const srcRow=band*3+rows[i], dstRow=band*3+i;
-        for(let c=0;c<9;c++) b[idx(dstRow,c)]=a[idx(srcRow,c)];
-      }
-    }
-    return b.map(String).join("");
-  }
-  function permuteColsWithinStacks(g){
-    const a=g.split("").map(Number); const b=new Array(81).fill(0);
-    for(let stack=0; stack<3; stack++){
-      const cols=perm3([0,1,2]);
-      for(let i=0;i<3;i++){
-        const srcCol=stack*3+cols[i], dstCol=stack*3+i;
-        for(let r=0;r<9;r++) b[idx(r,dstCol)]=a[idx(r,srcCol)];
-      }
-    }
-    return b.map(String).join("");
-  }
-  function permuteBands(g){
-    const a=g.split("").map(Number); const b=new Array(81).fill(0);
-    const bandOrder=perm3([0,1,2]);
-    for(let i=0;i<3;i++){
-      const srcBand=bandOrder[i];
-      for(let k=0;k<3;k++){
-        const srcRow=srcBand*3+k, dstRow=i*3+k;
-        for(let c=0;c<9;c++) b[idx(dstRow,c)]=a[idx(srcRow,c)];
-      }
-    }
-    return b.map(String).join("");
-  }
-  function permuteStacks(g){
-    const a=g.split("").map(Number); const b=new Array(81).fill(0);
-    const stackOrder=perm3([0,1,2]);
-    for(let i=0;i<3;i++){
-      const srcStack=stackOrder[i];
-      for(let k=0;k<3;k++){
-        const srcCol=srcStack*3+k, dstCol=i*3+k;
-        for(let r=0;r<9;r++) b[idx(r,dstCol)]=a[idx(r,srcCol)];
-      }
-    }
-    return b.map(String).join("");
-  }
-  P=permuteBands(P); S=permuteBands(S);
-  P=permuteRowsWithinBands(P); S=permuteRowsWithinBands(S);
-  P=permuteStacks(P); S=permuteStacks(S);
-  P=permuteColsWithinStacks(P); S=permuteColsWithinStacks(S);
+function I(r,c){return r*9+c;}
+function transform(puz,sol,seed){
+  let t=seed>>>0; const rnd=()=> (t=(t*1664525+1013904223)>>>0)/4294967296;
+  let d=[1,2,3,4,5,6,7,8,9]; for(let i=d.length-1;i>0;i--){const j=(rnd()*(i+1))|0; [d[i],d[j]]=[d[j],d[i]];}
+  const remap=g=>g.split("").map(ch=>ch==="0"?"0":String(d[+ch-1])).join("");
+  let P=remap(puz), S=remap(sol);
+  if(rnd()<0.5){const trans=g=>{const a=g.split("").map(Number), b=new Array(81).fill(0);
+    for(let r=0;r<9;r++)for(let c=0;c<9;c++) b[I(c,r)]=a[I(r,c)]; return b.map(String).join("");}; P=trans(P); S=trans(S);}
+  const perm3=a=>{a=a.slice(); for(let i=a.length-1;i>0;i--){const j=(rnd()*(i+1))|0; [a[i],a[j]]=[a[j],a[i]];} return a;};
+  function rowsWithin(g){const a=g.split("").map(Number), b=new Array(81).fill(0);
+    for(let band=0;band<3;band++){const rows=perm3([0,1,2]);
+      for(let i=0;i<3;i++){const src=band*3+rows[i], dst=band*3+i; for(let c=0;c<9;c++) b[I(dst,c)]=a[I(src,c)];}} return b.map(String).join("");}
+  function colsWithin(g){const a=g.split("").map(Number), b=new Array(81).fill(0);
+    for(let stack=0;stack<3;stack++){const cols=perm3([0,1,2]);
+      for(let i=0;i<3;i++){const src=stack*3+cols[i], dst=stack*3+i; for(let r=0;r<9;r++) b[I(r,dst)]=a[I(r,src)];}} return b.map(String).join("");}
+  function bands(g){const a=g.split("").map(Number), b=new Array(81).fill(0);
+    const ord=perm3([0,1,2]); for(let i=0;i<3;i++){const sb=ord[i];
+      for(let k=0;k<3;k++){const src=sb*3+k, dst=i*3+k; for(let c=0;c<9;c++) b[I(dst,c)]=a[I(src,c)];}} return b.map(String).join("");}
+  function stacks(g){const a=g.split("").map(Number), b=new Array(81).fill(0);
+    const ord=perm3([0,1,2]); for(let i=0;i<3;i++){const ss=ord[i];
+      for(let k=0;k<3;k++){const src=ss*3+k, dst=i*3+k; for(let r=0;r<9;r++) b[I(r,dst)]=a[I(r,src)];}} return b.map(String).join("");}
+  P=bands(P); S=bands(S); P=rowsWithin(P); S=rowsWithin(S); P=stacks(P); S=stacks(S); P=colsWithin(P); S=colsWithin(S);
   return {p:P,s:S};
 }
 function buildDataset(){
-  const diffs=["Easy","Medium","Hard","Expert"];
-  const targets=[0,1,2,3]; // base index per diff
-  let out=[]; let id=1;
-  for(let d=0; d<4; d++){
-    const base=BASE[d];
-    for(let k=0;k<25;k++){
-      const t=transform(base.p, base.s, (d+1)*1000 + k);
-      out.push({id, difficulty: diffs[d], puzzle:t.p, solution:t.s});
-      id++;
-    }
-  }
+  const diffs=["Easy","Medium","Hard","Expert"]; let out=[], id=1;
+  for(let d=0; d<4; d++){ const base=BASE[d];
+    for(let k=0;k<25;k++){ const t=transform(base.p, base.s, (d+1)*1000+k);
+      out.push({id, difficulty: diffs[d], puzzle:t.p, solution:t.s}); id++; } }
   return out;
 }
-const puzzles = buildDataset();
+const PUZZLES = buildDataset();
 
-/* -------- app state & UI -------- */
-const levelsView = document.getElementById('levelsView');
-const gameView   = document.getElementById('gameView');
-const levelsGrid = document.getElementById('levelsGrid');
-const tabs = Array.from(document.querySelectorAll('.tab'));
-const puzzleLabel = document.getElementById('puzzleLabel');
-const timerEl = document.getElementById('timer');
-const mistakesEl = document.getElementById('mistakes');
-const boardEl = document.getElementById('board');
-const btnLevels = document.getElementById('btnLevels');
-const btnReset  = document.getElementById('btnReset');
-const btnErase  = document.getElementById('btnErase');
-const btnHint   = document.getElementById('btnHint');
-const btnUndo   = document.getElementById('btnUndo');
-const backToLevels = document.getElementById('backToLevels');
-const winDialog = document.getElementById('winDialog');
-const winTime   = document.getElementById('winTime');
-const winClose  = document.getElementById('winClose');
+/* ---- UI + logic ---- */
+const levelsView=document.getElementById('levelsView');
+const gameView=document.getElementById('gameView');
+const levelsGrid=document.getElementById('levelsGrid');
+const tabs=Array.from(document.querySelectorAll('.tab'));
+const puzzleLabel=document.getElementById('puzzleLabel');
+const timerEl=document.getElementById('timer');
+const mistakesEl=document.getElementById('mistakes');
+const boardEl=document.getElementById('board');
+const btnLevels=document.getElementById('btnLevels');
+const btnReset=document.getElementById('btnReset');
+const btnErase=document.getElementById('btnErase');
+const btnHint=document.getElementById('btnHint');
+const btnUndo=document.getElementById('btnUndo');
+const backToLevels=document.getElementById('backToLevels');
+const winDialog=document.getElementById('winDialog');
+const winTime=document.getElementById('winTime');
+const winClose=document.getElementById('winClose');
 
 let current=null, grid=[], givens=new Set(), selected=null, mistakes=0, seconds=0, timer=null, undoStack=[];
 
-function show(id){ for(const v of document.querySelectorAll('.view')) v.classList.remove('active'); document.getElementById(id).classList.add('active'); }
+function show(id){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 function loadProgress(id){ const raw=localStorage.getItem('sudoku_progress_v1'); const all=raw?JSON.parse(raw):{}; return all[id]||null; }
 function saveProgress(id,obj){ const raw=localStorage.getItem('sudoku_progress_v1'); const all=raw?JSON.parse(raw):{}; all[id]=obj; localStorage.setItem('sudoku_progress_v1', JSON.stringify(all)); }
 function timeString(s){ const h=(s/3600)|0, m=((s%3600)/60)|0, ss=s%60; return h>0?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
 
 function renderLevels(diff="Easy"){
   tabs.forEach(t=>t.classList.toggle('active', t.dataset.diff===diff));
-  const list = puzzles.filter(p=>p.difficulty===diff).sort((a,b)=>a.id-b.id);
+  const list = PUZZLES.filter(p=>p.difficulty===diff).sort((a,b)=>a.id-b.id);
   levelsGrid.innerHTML="";
   for(const p of list){
-    const prog=loadProgress(p.id);
-    const card=document.createElement('button');
-    card.className='tile';
-    card.innerHTML = `<div class="id">#${p.id}</div><div class="diff">${p.difficulty}</div>${prog?.completed?'<div class="done">✓ Done</div>':''}`;
-    card.addEventListener('click',()=>startGame(p));
+    const prog = loadProgress(p.id);
+    const card = document.createElement('button');
+    card.className = 'tile';
+    card.innerHTML = `<div class="id">Puzzle #${p.id}</div>
+      <div class="diff">${p.difficulty}</div>
+      ${prog?.completed?'<div class="done">✓ Completed</div>':''}`;
+    card.addEventListener('click', ()=> startGame(p));
     levelsGrid.appendChild(card);
   }
 }
@@ -309,11 +247,11 @@ function stopTimer(){ clearInterval(timer); timer=null; }
 function startGame(p){
   current=p; puzzleLabel.textContent=`Puzzle #${p.id} — ${p.difficulty}`;
   mistakes=0; undoStack=[];
-  const saved=loadProgress(p.id);
-  grid=(saved?.current||p.puzzle).split('').map(ch=>+ch);
-  seconds=saved?.seconds||0;
-  givens=new Set(); for(let i=0;i<81;i++) if(p.puzzle[i]!=='0') givens.add(i);
-  mistakes=saved?.mistakes||0; mistakesEl.textContent=`Mistakes: ${mistakes}`;
+  const saved = loadProgress(p.id);
+  grid = (saved?.current || p.puzzle).split('').map(ch=>+ch);
+  seconds = saved?.seconds || 0;
+  givens = new Set(); for(let i=0;i<81;i++) if(p.puzzle[i]!=='0') givens.add(i);
+  mistakes = saved?.mistakes || 0; mistakesEl.textContent = `Mistakes: ${mistakes}`;
   selected=null; renderBoard(); timerEl.textContent=timeString(seconds);
   saved?.completed?stopTimer():startTimer();
   show('gameView');
@@ -324,11 +262,10 @@ function renderBoard(){
   for(let i=0;i<81;i++){
     const v=grid[i];
     const div=document.createElement('div');
-    div.className='cell';
-    if(givens.has(i)) div.classList.add('given');
+    div.className='cell'; if(givens.has(i)) div.classList.add('given');
     if(selected===i) div.classList.add('sel');
     if(selected!=null && grid[selected]!==0 && grid[i]===grid[selected] && i!==selected) div.classList.add('match');
-    div.textContent=v===0?"":String(v);
+    div.textContent = v===0 ? "" : String(v);
     div.addEventListener('click',()=>{selected=i; renderBoard();});
     boardEl.appendChild(div);
   }
@@ -336,12 +273,12 @@ function renderBoard(){
 
 function pushUndo(){ undoStack.push([...grid]); if(undoStack.length>200) undoStack.shift(); }
 function undo(){ if(undoStack.length){ grid=undoStack.pop(); persist(); renderBoard(); } }
-function isValid(i,val){
+function isValid(idx,val){
   if(val===0) return true;
-  const r=(i/9)|0, c=i%9;
-  for(let k=0;k<9;k++){ const ri=r*9+k, ci=k*9+c; if(ri!==i && grid[ri]===val) return false; if(ci!==i && grid[ci]===val) return false; }
+  const r=(idx/9)|0, c=idx%9;
+  for(let k=0;k<9;k++){ const ri=r*9+k, ci=k*9+c; if(ri!==idx && grid[ri]===val) return false; if(ci!==idx && grid[ci]===val) return false; }
   const br=((r/3)|0)*3, bc=((c/3)|0)*3;
-  for(let rr=br;rr<br+3;rr++)for(let cc=bc;cc<bc+3;cc++){ const j=rr*9+cc; if(j!==i && grid[j]===val) return false; }
+  for(let rr=br; rr<br+3; rr++) for(let cc=bc; cc<bc+3; cc++){ const i=rr*9+cc; if(i!==idx && grid[i]===val) return false; }
   return true;
 }
 function input(n){
@@ -352,23 +289,29 @@ function input(n){
 }
 function erase(){ if(selected==null || givens.has(selected)) return; pushUndo(); grid[selected]=0; persist(); renderBoard(); }
 function hint(){ if(selected==null || givens.has(selected)) return; pushUndo(); grid[selected]=+current.solution[selected]; persist(); renderBoard(); checkWin(); }
-function persist(completed=false){ saveProgress(current.id,{current:grid.map(String).join(''),seconds,mistakes,completed}); }
-function checkWin(){ for(let i=0;i<81;i++) if(grid[i]!==+current.solution[i]) return; stopTimer(); persist(true); winTime.textContent=`Time: ${timeString(seconds)}`; winDialog.showModal(); }
+function persist(completed=false){ saveProgress(current.id, {current:grid.map(String).join(''), seconds, mistakes, completed}); }
+function checkWin(){
+  for(let i=0;i<81;i++) if(grid[i]!==+current.solution[i]) return;
+  stopTimer(); persist(true); winTime.textContent=`Time: ${timeString(seconds)}`; winDialog.showModal();
+}
 function resetCurrent(){ if(!current) return; grid=current.puzzle.split('').map(ch=>+ch); mistakes=0; seconds=0; undoStack=[]; persist(false); renderBoard(); timerEl.textContent=timeString(seconds); startTimer(); }
 
 /* events */
 document.querySelectorAll('.btn[data-num]').forEach(b=>b.addEventListener('click',()=>input(+b.dataset.num)));
-document.getElementById('btnErase').addEventListener('click', erase);
-document.getElementById('btnHint').addEventListener('click', hint);
-document.getElementById('btnUndo').addEventListener('click', undo);
-document.getElementById('btnLevels').addEventListener('click', ()=>{show('levelsView'); stopTimer();});
-document.getElementById('backToLevels').addEventListener('click', ()=>{show('levelsView'); stopTimer();});
-document.getElementById('btnReset').addEventListener('click', resetCurrent);
-document.getElementById('winClose').addEventListener('click', ()=>{winDialog.close(); show('levelsView');});
+btnErase.addEventListener('click', erase);
+btnHint.addEventListener('click', hint);
+btnUndo.addEventListener('click', undo);
+btnLevels.addEventListener('click', ()=>{show('levelsView'); stopTimer();});
+backToLevels.addEventListener('click', ()=>{show('levelsView'); stopTimer();});
+btnReset.addEventListener('click', resetCurrent);
+winClose.addEventListener('click', ()=>{winDialog.close(); show('levelsView');});
+tabs.forEach(t=>t.addEventListener('click', ()=> renderLevels(t.dataset.diff))); /* difficulty toggle fixed */
 
 /* init */
 renderLevels('Easy');
 </script>
 </body>
 </html>
+
+
 
