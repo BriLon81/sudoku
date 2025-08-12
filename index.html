@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OneSudoku — 100 Levels</title>
+<style>
+:root{--bg:#0b1220;--panel:#0f172a;--text:#e5e7eb;--muted:#9ca3af;--accent:#60a5fa;--accWeak:rgba(96,165,250,.15);--good:#22c55e}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+.topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;background:var(--panel);border-bottom:1px solid rgba(255,255,255,.06)}
+.brand{font-weight:700}.spacer{flex:1}.link,.ghost,.btn{cursor:pointer;border:0;border-radius:10px}
+.link{background:transparent;color:var(--text);padding:.5rem .75rem;opacity:.9}.link:hover{opacity:1}
+main{max-width:980px;margin:0 auto;padding:1rem}.view{display:none}.view.active{display:block}
+.tabs{display:flex;gap:.5rem;margin:1rem 0}.tab{cursor:pointer;background:#111827;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:.5rem 1rem;border-radius:999px}
+.tab.active{background:var(--accent);color:#04121e;border-color:transparent}
+.levels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.75rem}
+.tile{background:#0d1527;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:.75rem;text-align:center}
+.tile .id{font-weight:700}.tile .diff{color:var(--muted);font-size:.8rem}.tile .done{color:var(--good);font-size:.85rem;margin-top:.25rem}
+.game-header{display:flex;align-items:center;gap:1rem;margin:.5rem 0}.game-meta{display:flex;gap:1rem;align-items:center}
+.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace}
+.board-wrap{display:flex;justify-content:center;margin:.25rem 0 1rem 0}
+.board{width:min(92vw,520px);aspect-ratio:1/1;display:grid;grid-template-columns:repeat(9,1fr);grid-template-rows:repeat(9,1fr);
+  background:#0b1324;border-radius:8px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+.cell{display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.06);font-size:1.4rem;user-select:none}
+.cell.given{color:#a6b1c5;font-weight:700}.cell.sel{background:var(--accWeak)}.cell.match{background:rgba(34,197,94,.12)}
+.board::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:8px;
+  background:linear-gradient(#ffffff22,#ffffff22) calc(100%/3) 0/2px 100% no-repeat,
+             linear-gradient(#ffffff22,#ffffff22) calc(200%/3) 0/2px 100% no-repeat,
+             linear-gradient(90deg,#ffffff22,#ffffff22) 0 calc(100%/3)/100% 2px no-repeat,
+             linear-gradient(90deg,#ffffff22,#ffffff22) 0 calc(200%/3)/100% 2px no-repeat}
+.pad{display:flex;flex-direction:column;gap:.5rem;align-items:center}
+.pad .row{display:grid;grid-template-columns:repeat(9,1fr);gap:.5rem;width:min(92vw,520px)}
+.btn{padding:.8rem 0;background:#0e162a;color:var(--text);border:1px solid rgba(255,255,255,.08)}.btn:active{transform:translateY(1px)}
+.ghost{background:#101828;border:1px solid rgba(255,255,255,.1);color:var(--text);padding:.6rem 1rem}
+dialog{border:none;border-radius:16px;background:#0f1629;color:var(--text);padding:0;max-width:360px;width:90vw}
+.dialog-body{padding:1rem}.checkmark{font-size:48px;color:var(--good);text-align:center}.dialog-actions{display:flex;justify-content:center;margin-top:.5rem}
+footer{padding:1rem;color:#9ca3af;text-align:center}
+</style>
+
+<body>
+  <header class="topbar">
+    <div class="brand">OneSudoku</div>
+    <div class="spacer"></div>
+    <button id="btnLevels" class="link">Levels</button>
+    <button id="btnReset" class="link" title="Reset current puzzle">Reset</button>
+  </header>
+
+  <main id="app">
+    <section id="levelsView" class="view active">
+      <h1>Pick a level</h1>
+      <div class="tabs">
+        <button class="tab active" data-diff="Easy">Easy</button>
+        <button class="tab" data-diff="Medium">Medium</button>
+        <button class="tab" data-diff="Hard">Hard</button>
+        <button class="tab" data-diff="Expert">Expert</button>
+      </div>
+      <div id="levelsGrid" class="levels-grid"></div>
+    </section>
+
+    <section id="gameView" class="view">
+      <div class="game-header">
+        <button id="backToLevels" class="link">&larr; Levels</button>
+        <div class="game-meta">
+          <span id="puzzleLabel"></span>
+          <span id="timer" class="mono">00:00</span>
+          <span id="mistakes">Mistakes: 0</span>
+        </div>
+      </div>
+      <div class="board-wrap"><div id="board" class="board"></div></div>
+      <div class="pad">
+        <div class="row">
+          <button class="btn" data-num="1">1</button><button class="btn" data-num="2">2</button><button class="btn" data-num="3">3</button>
+          <button class="btn" data-num="4">4</button><button class="btn" data-num="5">5</button><button class="btn" data-num="6">6</button>
+          <button class="btn" data-num="7">7</button><button class="btn" data-num="8">8</button><button class="btn" data-num="9">9</button>
+        </div>
+        <div class="row">
+          <button id="btnErase" class="ghost">Erase</button>
+          <button id="btnHint"  class="ghost">Hint</button>
+          <button id="btnUndo"  class="ghost">Undo</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="winDialog">
+    <div class="dialog-body">
+      <div class="checkmark">✓</div>
+      <h3>Completed!</h3>
+      <p id="winTime" class="mono"></p>
+      <div class="dialog-actions"><button id="winClose" class="ghost">Back to Levels</button></div>
+    </div>
+  </dialog>
+
+  <footer><span>Saves progress in your browser</span></footer>
+
+<script>
+/* ---- 100 levels generator: start with 4 base puzzles + solution, then make 25 safe variants each ---- */
+const BASE = [
+  { // Easy
+    p:"530070000600195000098000060800060003400803001700020006060000280000419005000080079",
+    s:"534678912672195348198342567859761423426853791713924856961537284287419635345286179"
+  },
+  { // Medium
+    p:"005300000800000020070000405000080700040302010009050000901000080020000009000006300",
+    s:"145379268896145723273868415512684793748392516369751842931427685624583179857916234"
+  },
+  { // Hard
+    p:"000000907000420180000705026100904000050000040000507009920108000034059000507000000",
+    s:"461832957375426189298715326183974265752691843649527819926148537834259671517363492"
+  },
+  { // Expert
+    p:"000900002050000600000008001007000040908000106010000800700500000004000020500007000",
+    s:"471963582852174693396258471167839245948725136213646859729581364634392718585417923"
+  }
+];
+function rc(i){return [Math.floor(i/9), i%9];}
+function idx(r,c){return r*9+c;}
+function transform(puz, sol, seed){
+  // PRNG
+  let t = seed>>>0; const rnd=()=> (t=(t*1664525+1013904223)>>>0)/4294967296;
+  // digit permutation
+  let d=[1,2,3,4,5,6,7,8,9]; for(let i=d.length-1;i>0;i--){const j=(rnd()* (i+1))|0; [d[i],d[j]]=[d[j],d[i]];}
+  const map=(g)=>g.split("").map(ch=> ch==="0"?"0":String(d[parseInt(ch,10)-1])).join("");
+  let P=map(puz), S=map(sol);
+
+  // optional transpose
+  if (rnd()<0.5){
+    const trans = g => {
+      const a=g.split("").map(Number); const b=new Array(81).fill(0);
+      for(let r=0;r<9;r++)for(let c=0;c<9;c++) b[idx(c,r)]=a[idx(r,c)];
+      return b.map(String).join("");
+    };
+    P=trans(P); S=trans(S);
+  }
+  // permute bands/stacks and rows/cols within them
+  const perm3 = arr => { const a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=(rnd()*(i+1))|0; [a[i],a[j]]=[a[j],a[i]];} return a; };
+  function permuteRowsWithinBands(g){
+    const a=g.split("").map(Number); const b=new Array(81).fill(0);
+    for(let band=0; band<3; band++){
+      const rows=perm3([0,1,2]);
+      for(let i=0;i<3;i++){
+        const srcRow=band*3+rows[i], dstRow=band*3+i;
+        for(let c=0;c<9;c++) b[idx(dstRow,c)]=a[idx(srcRow,c)];
+      }
+    }
+    return b.map(String).join("");
+  }
+  function permuteColsWithinStacks(g){
+    const a=g.split("").map(Number); const b=new Array(81).fill(0);
+    for(let stack=0; stack<3; stack++){
+      const cols=perm3([0,1,2]);
+      for(let i=0;i<3;i++){
+        const srcCol=stack*3+cols[i], dstCol=stack*3+i;
+        for(let r=0;r<9;r++) b[idx(r,dstCol)]=a[idx(r,srcCol)];
+      }
+    }
+    return b.map(String).join("");
+  }
+  function permuteBands(g){
+    const a=g.split("").map(Number); const b=new Array(81).fill(0);
+    const bandOrder=perm3([0,1,2]);
+    for(let i=0;i<3;i++){
+      const srcBand=bandOrder[i];
+      for(let k=0;k<3;k++){
+        const srcRow=srcBand*3+k, dstRow=i*3+k;
+        for(let c=0;c<9;c++) b[idx(dstRow,c)]=a[idx(srcRow,c)];
+      }
+    }
+    return b.map(String).join("");
+  }
+  function permuteStacks(g){
+    const a=g.split("").map(Number); const b=new Array(81).fill(0);
+    const stackOrder=perm3([0,1,2]);
+    for(let i=0;i<3;i++){
+      const srcStack=stackOrder[i];
+      for(let k=0;k<3;k++){
+        const srcCol=srcStack*3+k, dstCol=i*3+k;
+        for(let r=0;r<9;r++) b[idx(r,dstCol)]=a[idx(r,srcCol)];
+      }
+    }
+    return b.map(String).join("");
+  }
+  P=permuteBands(P); S=permuteBands(S);
+  P=permuteRowsWithinBands(P); S=permuteRowsWithinBands(S);
+  P=permuteStacks(P); S=permuteStacks(S);
+  P=permuteColsWithinStacks(P); S=permuteColsWithinStacks(S);
+  return {p:P,s:S};
+}
+function buildDataset(){
+  const diffs=["Easy","Medium","Hard","Expert"];
+  const targets=[0,1,2,3]; // base index per diff
+  let out=[]; let id=1;
+  for(let d=0; d<4; d++){
+    const base=BASE[d];
+    for(let k=0;k<25;k++){
+      const t=transform(base.p, base.s, (d+1)*1000 + k);
+      out.push({id, difficulty: diffs[d], puzzle:t.p, solution:t.s});
+      id++;
+    }
+  }
+  return out;
+}
+const puzzles = buildDataset();
+
+/* -------- app state & UI -------- */
+const levelsView = document.getElementById('levelsView');
+const gameView   = document.getElementById('gameView');
+const levelsGrid = document.getElementById('levelsGrid');
+const tabs = Array.from(document.querySelectorAll('.tab'));
+const puzzleLabel = document.getElementById('puzzleLabel');
+const timerEl = document.getElementById('timer');
+const mistakesEl = document.getElementById('mistakes');
+const boardEl = document.getElementById('board');
+const btnLevels = document.getElementById('btnLevels');
+const btnReset  = document.getElementById('btnReset');
+const btnErase  = document.getElementById('btnErase');
+const btnHint   = document.getElementById('btnHint');
+const btnUndo   = document.getElementById('btnUndo');
+const backToLevels = document.getElementById('backToLevels');
+const winDialog = document.getElementById('winDialog');
+const winTime   = document.getElementById('winTime');
+const winClose  = document.getElementById('winClose');
+
+let current=null, grid=[], givens=new Set(), selected=null, mistakes=0, seconds=0, timer=null, undoStack=[];
+
+function show(id){ for(const v of document.querySelectorAll('.view')) v.classList.remove('active'); document.getElementById(id).classList.add('active'); }
+function loadProgress(id){ const raw=localStorage.getItem('sudoku_progress_v1'); const all=raw?JSON.parse(raw):{}; return all[id]||null; }
+function saveProgress(id,obj){ const raw=localStorage.getItem('sudoku_progress_v1'); const all=raw?JSON.parse(raw):{}; all[id]=obj; localStorage.setItem('sudoku_progress_v1', JSON.stringify(all)); }
+function timeString(s){ const h=(s/3600)|0, m=((s%3600)/60)|0, ss=s%60; return h>0?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
+
+function renderLevels(diff="Easy"){
+  tabs.forEach(t=>t.classList.toggle('active', t.dataset.diff===diff));
+  const list = puzzles.filter(p=>p.difficulty===diff).sort((a,b)=>a.id-b.id);
+  levelsGrid.innerHTML="";
+  for(const p of list){
+    const prog=loadProgress(p.id);
+    const card=document.createElement('button');
+    card.className='tile';
+    card.innerHTML = `<div class="id">#${p.id}</div><div class="diff">${p.difficulty}</div>${prog?.completed?'<div class="done">✓ Done</div>':''}`;
+    card.addEventListener('click',()=>startGame(p));
+    levelsGrid.appendChild(card);
+  }
+}
+
+function startTimer(){ clearInterval(timer); timer=setInterval(()=>{seconds++; timerEl.textContent=timeString(seconds);},1000); }
+function stopTimer(){ clearInterval(timer); timer=null; }
+
+function startGame(p){
+  current=p; puzzleLabel.textContent=`Puzzle #${p.id} — ${p.difficulty}`;
+  mistakes=0; undoStack=[];
+  const saved=loadProgress(p.id);
+  grid=(saved?.current||p.puzzle).split('').map(ch=>+ch);
+  seconds=saved?.seconds||0;
+  givens=new Set(); for(let i=0;i<81;i++) if(p.puzzle[i]!=='0') givens.add(i);
+  mistakes=saved?.mistakes||0; mistakesEl.textContent=`Mistakes: ${mistakes}`;
+  selected=null; renderBoard(); timerEl.textContent=timeString(seconds);
+  saved?.completed?stopTimer():startTimer();
+  show('gameView');
+}
+
+function renderBoard(){
+  boardEl.innerHTML="";
+  for(let i=0;i<81;i++){
+    const v=grid[i];
+    const div=document.createElement('div');
+    div.className='cell';
+    if(givens.has(i)) div.classList.add('given');
+    if(selected===i) div.classList.add('sel');
+    if(selected!=null && grid[selected]!==0 && grid[i]===grid[selected] && i!==selected) div.classList.add('match');
+    div.textContent=v===0?"":String(v);
+    div.addEventListener('click',()=>{selected=i; renderBoard();});
+    boardEl.appendChild(div);
+  }
+}
+
+function pushUndo(){ undoStack.push([...grid]); if(undoStack.length>200) undoStack.shift(); }
+function undo(){ if(undoStack.length){ grid=undoStack.pop(); persist(); renderBoard(); } }
+function isValid(i,val){
+  if(val===0) return true;
+  const r=(i/9)|0, c=i%9;
+  for(let k=0;k<9;k++){ const ri=r*9+k, ci=k*9+c; if(ri!==i && grid[ri]===val) return false; if(ci!==i && grid[ci]===val) return false; }
+  const br=((r/3)|0)*3, bc=((c/3)|0)*3;
+  for(let rr=br;rr<br+3;rr++)for(let cc=bc;cc<bc+3;cc++){ const j=rr*9+cc; if(j!==i && grid[j]===val) return false; }
+  return true;
+}
+function input(n){
+  if(selected==null || givens.has(selected)) return;
+  pushUndo(); grid[selected]=n;
+  if(!isValid(selected,n)){ mistakes++; mistakesEl.textContent=`Mistakes: ${mistakes}`; }
+  persist(); renderBoard(); checkWin();
+}
+function erase(){ if(selected==null || givens.has(selected)) return; pushUndo(); grid[selected]=0; persist(); renderBoard(); }
+function hint(){ if(selected==null || givens.has(selected)) return; pushUndo(); grid[selected]=+current.solution[selected]; persist(); renderBoard(); checkWin(); }
+function persist(completed=false){ saveProgress(current.id,{current:grid.map(String).join(''),seconds,mistakes,completed}); }
+function checkWin(){ for(let i=0;i<81;i++) if(grid[i]!==+current.solution[i]) return; stopTimer(); persist(true); winTime.textContent=`Time: ${timeString(seconds)}`; winDialog.showModal(); }
+function resetCurrent(){ if(!current) return; grid=current.puzzle.split('').map(ch=>+ch); mistakes=0; seconds=0; undoStack=[]; persist(false); renderBoard(); timerEl.textContent=timeString(seconds); startTimer(); }
+
+/* events */
+document.querySelectorAll('.btn[data-num]').forEach(b=>b.addEventListener('click',()=>input(+b.dataset.num)));
+document.getElementById('btnErase').addEventListener('click', erase);
+document.getElementById('btnHint').addEventListener('click', hint);
+document.getElementById('btnUndo').addEventListener('click', undo);
+document.getElementById('btnLevels').addEventListener('click', ()=>{show('levelsView'); stopTimer();});
+document.getElementById('backToLevels').addEventListener('click', ()=>{show('levelsView'); stopTimer();});
+document.getElementById('btnReset').addEventListener('click', resetCurrent);
+document.getElementById('winClose').addEventListener('click', ()=>{winDialog.close(); show('levelsView');});
+
+/* init */
+renderLevels('Easy');
+</script>
+</body>
+</html>
